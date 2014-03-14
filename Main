@@ -1,0 +1,57 @@
+require './FlightGoogle'
+
+my_flight = FlightGoogle.new('ORY,CDG','PEK','2014-03-24','2014-03-28')
+puts my_flight.getURL
+my_flight.gotob
+#puts my_flight.getData('GJJKPX2JFC')
+puts "getting report........."
+#puts my_flight.getData('GJJKPX2PCC')
+#puts "100 times #{my_flight.dupVect(my_flight.ibCity,100)}"
+my_flight.getReport
+puts "generate csv........."
+my_flight.exportcsv
+my_flight.closeb
+
+require "csv"
+require "to-csv"
+#report = Array.new(0){ Hash.new }
+#report.push("dtPrice"=>['a','b','c'])
+report=Hash.new
+report2=Hash.new
+a='haha'
+temp = Array.new
+3.times {temp.push(a)}
+report["dtTest"] = temp
+report["dtPrice1"]=(1..3).to_a
+report["dtPrice2"]=['e','d','f']
+#report2["dtPrice1"]=['a1','b1','c1']
+#report2["dtPrice2"]=['a1','1b','1c']
+#report = report2.merge(report)
+puts report
+rowid = -1
+file_name = Date.today.to_s
+File.open("testonly.csv", 'w') {|csv| csv.puts report.to_csv}
+def exportcsv(report)
+  CSV.open("testonly.csv", 'w') do |csv|
+    csv << report.keys
+    report.each do |key, val|
+      csv << val
+    end
+  end
+end
+#exportcsv(report)
+=begin
+CSV.open("testonly.csv", 'w') do |csv|
+  report.each do
+    rowid += 1
+    if rowid == 0
+      csv << report.keys
+    else
+      report.values.transpose.each do |x|
+      csv << x
+      end
+      #csv << report.values.transpose
+    end# of if/else inside hsh
+  end# of hsh's (rows)
+end# of csv open
+=end
