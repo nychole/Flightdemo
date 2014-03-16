@@ -1,6 +1,6 @@
 #gem install mongo
 #gem install bson_ext
-=begin
+
 require 'mongo'
 include Mongo
 
@@ -13,11 +13,11 @@ client = MongoClient.new #
 #client = MongoClient.new('localhost',27017, opts)
 
 # using a database
-db = client.db('blog')
+db = client.db('test')
 
 # using a collection
-coll = db['users']
-
+coll = db['test']
+=begin
 # document
 author = {
     :username =>'nychole',
@@ -32,10 +32,35 @@ client['blog']['users'].insert(author)
 # finding a single document
 puts "There are #{coll.count} total documents. Here they are: #{coll.find.each { |doc| puts doc.inspect }}"
 
+
+require 'date'
+testdate = Date.new(2014,4,14)
+#converted = Date::strptime(testdate, "%Y-%M-%D")
+puts testdate.to_s
+puts testdate+1
+
+require './FlightGoogle'
+ibcity = 'ORY,CDG'
+obcity = 'PEK'
+
+my_flight = FlightGoogle.new(ibcity,obcity,'2014-04-01','2014-04-14')
+puts my_flight.getURL
+my_flight.gotob
+puts 'wait...'
+FlightGoogle.new(ibcity,obcity,'2014-04-01','2014-05-14').gotob
+
+
 =end
 
-report = Hash.new
-report[:name]='zh'
-report[:blog]=Hash.new
-report[:blog][:date]='2014'
-puts report
+
+total = Hash.new
+total['anything']='yes'
+
+test = Array(Hash.new)
+test[1]={:name=>'a1',:price=>100}
+test[2]={:name=>'a2',:price=>200}
+test[3]={:name=>'a3',:price=>300}
+total['flight']=test
+client['test']['test'].insert(total)
+puts test
+puts total

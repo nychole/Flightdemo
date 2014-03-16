@@ -1,4 +1,5 @@
 require './FlightGoogle'
+require 'date'
 require 'mongo'
 include Mongo
 
@@ -6,26 +7,44 @@ include Mongo
 client = MongoClient.new
 db = client.db('Flightdb')
 
+# para settings
+dtReserve = Date.today
+ibcity = 'ORY,CDG'
+obcity = 'PEK'
+
+maxObdate = 360
+minObdate = 7
+maxIbdate = 90
+minIbdate = 7
+
+#obdate = Date.new(2014,4,1)
+
+# set collection
+coll = db['PARPEK']
 
 # launch search engine
-my_flight = FlightGoogle.new('ORY,CDG','PEK','2014-04-01','2014-04-14')
+=begin
+for i in minIbdate..maxObdate do
+  puts 'demo'
+end
+=end
+my_flight = FlightGoogle.new(ibcity,obcity,'2014-04-01','2014-04-08')
 puts my_flight.getURL
 my_flight.gotob
 #puts my_flight.getData('GJJKPX2CEC').collect { |x| x.gsub(/\D/,'').to_i }
 #puts my_flight.getReport
-
+puts 'wait...'
 
 puts "getting report........."
 my_flight_report = Hash.new
 my_flight_report = my_flight.getReport
-dtReserve = my_flight_report['dtReserve'].to_s
-puts dtReserve
-coll = db[dtReserve]
-client['Flightdb'][dtReserve].insert(my_flight_report)
+
+client['Flightdb']['PARPEK'].insert(my_flight_report)
 #client['Flightdb'][dtReserve].update(my_flight_report)
 
-puts "generate csv........."
+#puts "generate csv........."
 #my_flight.exportcsv
+puts client['Flightdb']['PARPEK'].find()
 my_flight.closeb
 
 

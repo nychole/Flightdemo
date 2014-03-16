@@ -61,7 +61,7 @@ class FlightGoogle
     #@report['obDate'] = obDate#dupVect(obDate,nbRow)
     #@report['ibDate'] = ibDate#dupVect(ibDate,nbRow)
     @report['dtComp'] = getData('GJJKPX2PCC')[1..nbRow]
-    puts " the company are #{@report['dtComp']}"
+    #puts " the company are #{@report['dtComp']}"
     @report['dtHours'] = getData('GJJKPX2KDC')[1..nbRow]
     @report['dtTrans'] = getData('GJJKPX2FGC')[1..nbRow]
     #dtPrice.size.times{report << [@@dtReserve, obCity, ibCity, obDate, ibDate]}
@@ -71,11 +71,11 @@ class FlightGoogle
     @Newflight = Hash.new
     for i in 1..nbRow do
       @Newflight['dtReserve'] = @@dtReserve
-      @Newflight['obCity'] = obCity
-      @Newflight['ibCity'] = ibCity
+      #@Newflight['obCity'] = obCity
+      #@Newflight['ibCity'] = ibCity
       @Newflight['obDate'] = obDate
       @Newflight['ibDate'] = ibDate
-      @Newflight["flight-#{i}"]=Hash.new
+      @Newflight["flights"]=Array(Hash.new)
       @Newflight["flight-#{i}"]['dtComp'] = @report['dtComp'][i]
       @Newflight["flight-#{i}"]['dtPrice'] = @report['dtPrice'][i]
       @Newflight["flight-#{i}"]['dtHours'] = @report['dtHours'][i]
