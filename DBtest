@@ -1,0 +1,41 @@
+#gem install mongo
+#gem install bson_ext
+=begin
+require 'mongo'
+include Mongo
+
+# connecting to te database
+client = MongoClient.new #
+#client = MongoClient.new('host1.example.com')
+#client = MongoClient.new('host1.example.com',27017)
+
+#opts = {:pool_size => 5, :pool_timeout => 5}
+#client = MongoClient.new('localhost',27017, opts)
+
+# using a database
+db = client.db('blog')
+
+# using a collection
+coll = db['users']
+
+# document
+author = {
+    :username =>'nychole',
+    :first=>'Wenkai',
+    :last=>'Zhang'
+}
+
+# inserting into users
+client['blog']['users'].insert(author)
+
+
+# finding a single document
+puts "There are #{coll.count} total documents. Here they are: #{coll.find.each { |doc| puts doc.inspect }}"
+
+=end
+
+report = Hash.new
+report[:name]='zh'
+report[:blog]=Hash.new
+report[:blog][:date]='2014'
+puts report
