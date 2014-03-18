@@ -15,81 +15,49 @@ obcity = 'PEK'
 maxObdate = 360
 minObdate = 7
 maxIbdate = 90
-minIbdate = 7
+minIbdate = 14
 
-#obdate = Date.new(2014,4,1)
+#obDate = '2014-04-01'
+#ibDate = '2014-04-08'
+
 
 # set collection
 coll = db['PARPEK']
 
+beginning = Time.now
+
 # launch search engine
-=begin
-for i in minIbdate..maxObdate do
-  puts 'demo'
-end
-=end
-my_flight = FlightGoogle.new(ibcity,obcity,'2014-04-01','2014-04-08')
-puts my_flight.getURL
-my_flight.gotob
-#puts my_flight.getData('GJJKPX2CEC').collect { |x| x.gsub(/\D/,'').to_i }
-#puts my_flight.getReport
-puts 'wait...'
+for i in 22..maxObdate do
+  obDate = (dtReserve+i)
+  ibDate = (obDate + minIbdate)
+  puts "searching starts with #{obDate}~#{ibDate}"
 
-puts "getting report........."
-my_flight_report = Hash.new
-my_flight_report = my_flight.getReport
+  my_flight = FlightGoogle.new(ibcity,obcity,obDate,ibDate)
+  puts my_flight.getURL
+  my_flight.gotob
 
-client['Flightdb']['PARPEK'].insert(my_flight_report)
-#client['Flightdb'][dtReserve].update(my_flight_report)
+  puts "getting report........."
+  my_flight_report = my_flight.getReport
+  nbRow = my_flight_report['dtPrice'].collect.size
 
-#puts "generate csv........."
-#my_flight.exportcsv
-puts client['Flightdb']['PARPEK'].find()
-my_flight.closeb
-
-
-
-=begin
-require "csv"
-require "to-csv"
-#report = Array.new(0){ Hash.new }
-#report.push("dtPrice"=>['a','b','c'])
-report=Hash.new
-report2=Hash.new
-a='haha'
-temp = Array.new
-3.times {temp.push(a)}
-report["dtTest"] = temp
-report["dtPrice1"]=(1..3).to_a
-report["dtPrice2"]=['e','d','f']
-#report2["dtPrice1"]=['a1','b1','c1']
-#report2["dtPrice2"]=['a1','1b','1c']
-#report = report2.merge(report)
-puts report
-rowid = -1
-file_name = Date.today.to_s
-File.open("testonly.csv", 'w') {|csv| csv.puts report.to_csv}
-def exportcsv(report)
-  CSV.open("testonly.csv", 'w') do |csv|
-    csv << report.keys
-    report.each do |key, val|
-      csv << val
-    end
+# rewrite the matrix
+  for i in 1..nbRow do
+    new_flight_report = Hash.new
+    new_flight_report["flights"]=Hash.new
+    new_flight_report['dtReserve'] = dtReserve.to_s
+    new_flight_report['obDate'] = obDate.to_s
+    new_flight_report['ibDate'] = ibDate.to_s
+    new_flight_report["flights"] = {
+        :dtComp=>my_flight_report['dtComp'][i],
+        :dtPrice=>my_flight_report['dtPrice'][i],
+        :dtHours=>my_flight_report['dtHours'][i],
+        :dtTrans=>my_flight_report['dtTrans'][i],
+    }
+    coll.insert(new_flight_report)
   end
-end
-#exportcsv(report)
 
-CSV.open("testonly.csv", 'w') do |csv|
-  report.each do
-    rowid += 1
-    if rowid == 0
-      csv << report.keys
-    else
-      report.values.transpose.each do |x|
-      csv << x
-      end
-      #csv << report.values.transpose
-    end# of if/else inside hsh
-  end# of hsh's (rows)
-end# of csv open
-=end
+  my_flight.closeb
+  puts "Time elapsed #{Time.now - beginning} seconds"
+end
+
+puts "Routine terminated and time elapsed #{Time.now - beginning} seconds"
