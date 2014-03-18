@@ -19,7 +19,7 @@ class FlightGoogle
   end
   def gotob
     url = getURL
-    @b = Watir::Browser.new(:firefox)
+    @b = Watir::Browser.new(:ie)
     @b.goto url
     @b.driver.manage.timeouts.implicit_wait = 3 #3 seconds
   end
@@ -50,68 +50,13 @@ class FlightGoogle
     @report = Hash.new
     @report['dtPrice'] = getData('GJJKPX2JFC').collect { |x| x.gsub(/\D/,'').to_i }
     nbRow = @report['dtPrice'].collect.size
-    #@report['ID'] = (1..nbRow).to_a
-    #puts " the id are #{@report['ID']}"
-    #puts " the prices are #{@report['dtPrice']}"
-    #puts "the price has size of #{nbRow}"
-    #@report['dtReserve'] = @@dtReserve #dupVect(@@dtReserve,nbRow)
-    #puts " the ReserveDates are #{@report['dtReserve']}"
-    #@report['obCity'] = obCity #dupVect(obCity,nbRow)
-    #@report['ibCity'] = ibCity#dupVect(ibCity,nbRow)
-    #@report['obDate'] = obDate#dupVect(obDate,nbRow)
-    #@report['ibDate'] = ibDate#dupVect(ibDate,nbRow)
     @report['dtComp'] = getData('GJJKPX2PCC')[1..nbRow]
-    #puts " the company are #{@report['dtComp']}"
     @report['dtHours'] = getData('GJJKPX2KDC')[1..nbRow]
     @report['dtTrans'] = getData('GJJKPX2FGC')[1..nbRow]
-    #dtPrice.size.times{report << [@@dtReserve, obCity, ibCity, obDate, ibDate]}
-    #report << [dtComp[1..dtPrice.size], dtPrice, dtHours[1..dtPrice.size], dtTrans[1..dtPrice.size]]
-    #report = report.transpose
-    #puts "report done with #{@report.keys.length} of keys and #{@report.values.size} of values"
-    @Newflight = Hash.new
-    for i in 1..nbRow do
-      @Newflight['dtReserve'] = @@dtReserve
-      #@Newflight['obCity'] = obCity
-      #@Newflight['ibCity'] = ibCity
-      @Newflight['obDate'] = obDate
-      @Newflight['ibDate'] = ibDate
-      @Newflight["flights"]=Array(Hash.new)
-      @Newflight["flight-#{i}"]['dtComp'] = @report['dtComp'][i]
-      @Newflight["flight-#{i}"]['dtPrice'] = @report['dtPrice'][i]
-      @Newflight["flight-#{i}"]['dtHours'] = @report['dtHours'][i]
-      @Newflight["flight-#{i}"]['dtTrans'] = @report['dtTrans'][i]
-    end
-    return @Newflight
+
+    return @report
   end
 
-=begin
-  def exportcsv
-    rowid = -1
-    CSV.open("testflight_#{@@dtReserve}.csv", 'w') do |csv|
-      $report.each do
-        rowid += 1
-        puts rowid
-        if rowid == 0
-          csv << $report.keys
-          # puts @report.keys
-        else
-            csv <<$report.values #.each do |x|
-              #csv << x
-              #end
-        end# of if/else inside hsh
-      end# of hsh's (rows)
-      end
-  end
-
-  def exportcsv
-    CSV.open("testflight_#{@@dtReserve}.csv", 'w') do |csv|
-      csv << @report.keys
-      @report.each do |key, val|
-        csv << [val].transpose
-      end
-    end
-  end
-=end
   def dupVect(arr,num)
     temp = []
     num.times {temp << arr.to_s}
