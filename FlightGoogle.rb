@@ -19,15 +19,33 @@ class FlightGoogle
   end
   def gotob
     url = getURL
+    begin
     @b = Watir::Browser.new(:ie)
     @b.goto url
+    rescue
+      @b.quit
+      retry
+    end
     @b.driver.manage.timeouts.implicit_wait = 3 #3 seconds
+    #@b.div(:class => 'GJJKPX2JFC').wait_until_present
   end
   def getData(id)
     dataArr = []
+    begin
+    r = 0
     d = @b.divs :class => id
     d.each do |x|
+      r += 1
+      if r < 100 then
       dataArr << x.text
+      else
+        break
+      end
+    end
+    rescue
+      @b.quit
+      self.gotob
+      retry
     end
     return dataArr
   end
@@ -48,11 +66,11 @@ class FlightGoogle
   def getReport
     puts "this is the report as of #{@@dtReserve}..."
     @report = Hash.new
-    @report['dtPrice'] = getData('GJJKPX2JFC').collect { |x| x.gsub(/\D/,'').to_i }
-    nbRow = @report['dtPrice'].collect.size
-    @report['dtComp'] = getData('GJJKPX2PCC')[1..nbRow]
-    @report['dtHours'] = getData('GJJKPX2KDC')[1..nbRow]
-    @report['dtTrans'] = getData('GJJKPX2FGC')[1..nbRow]
+    @report[:dtPrice] = getData('GJJKPX2JFC').collect { |x| x.gsub(/\D/,'').to_i }
+    nbRow = @report[:dtPrice].collect.size
+    @report[:dtComp] = getData('GJJKPX2PCC')[1..nbRow]
+    @report[:dtHours] = getData('GJJKPX2KDC')[1..nbRow]
+    @report[:dtTrans] = getData('GJJKPX2FGC')[1..nbRow]
 
     return @report
   end
