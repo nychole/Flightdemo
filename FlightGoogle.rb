@@ -3,6 +3,7 @@ class FlightGoogle
   require "watir-webdriver"
   require "csv"
   require "watir-nokogiri"
+  require 'timeout'
 
   @@dtReserve = Date.today.to_s
   attr_accessor :obCity
@@ -20,20 +21,24 @@ class FlightGoogle
   def getURL
     return "https://www.google.fr/flights/#search;f=#{@obCity};t=#{@ibCity};d=#{@obDate};r=#{@ibDate};so=p;eo=e"
   end
+
   def gotob
-    url = getURL
+    url = self.getURL
+    puts 'gotob'
     begin
-      @b = Watir::Browser.new(:firefox)
-      @b.goto url
-    rescue
+      @b = Watir::Browser.new(:ie)
+      complete_results = Timeout.timeout(5) do
+        @b.goto url
+        @b.driver.manage.timeouts.implicit_wait = 2 #3 seconds
+        if @b.div(:text => "aller-retour").exist? then
+          @doc = Nokogiri::HTML(@b.html)
+        end
+      end
+    rescue StandardError,Timeout::Error
       @b.quit
       retry
     end
-    @b.driver.manage.timeouts.implicit_wait = 2 #3 seconds
     #puts @b.text
-    if @b.div(:text => "aller-retour").exist? then
-      @doc = Nokogiri::HTML(@b.html)
-    end
   end
 
   def getnbRow
@@ -41,37 +46,11 @@ class FlightGoogle
   end
   def getNoko(r)
     dataArr = Hash.new
-=begin
-      doc.divs(:text => "aller-retour")[0].parent
-      a = a.parent until a.tag_name == 'a'
-      a.divs.map {|x| puts x.text }
-=end
-      dataArr[:dtPrice] = @doc.xpath("(//a/div[position()=1])[#{r}]").text.gsub(/[^\d]/,"")
-      dataArr[:dtComp] = @doc.xpath("(//a/div[position()=2])[#{r}]").text.gsub(/[^a-zA-Z ]/,'').gsub(/ +/,' ')
-      dataArr[:dtHours] = @doc.xpath("(//a/div[position()=3])[#{r}]").text.split(/[^\d]/).delete_if(&:empty?).join('h')
-      dataArr[:dtTrans] = @doc.xpath("(//a/div[position()=4])[#{r}]").text
-
-=begin
-      @doc.xpath('(//a/div[position()=4])').each do |x|
-      puts "-----"
-      #puts x.content
-      puts x.text #gsub(/[^a-zA-Z ]/,'').gsub(/ +/,' ') #gsub(/\d|\W/,"")
-        #puts a.xpath('following-sibling::text()').content
-        #end
-      #doc.css("a").each do |x|
-      #  puts x.content
-      end
-
-      doc.xpath("//a").map do |x|
-        puts "-----"
-        puts x.content
-      end
-=end
+    dataArr[:dtPrice] = @doc.xpath("(//a/div[position()=1])[#{r}]").text.gsub(/[^\d]/,"").to_i
+    dataArr[:dtComp] = @doc.xpath("(//a/div[position()=2])[#{r}]").text.gsub(/[^a-zA-Z ]/,'').gsub(/ +/,' ')
+    dataArr[:dtHours] = @doc.xpath("(//a/div[position()=3])[#{r}]").text.split(/[^\d]/).delete_if(&:empty?).join('h')
+    dataArr[:dtTrans] = @doc.xpath("(//a/div[position()=4])[#{r}]").text
     return dataArr
-    @b.driver.manage.timeouts.implicit_wait = 1 #3 seconds
-    puts @b.tables.html
-    #@b.wait_until { @b.body.exists? }
-    #@b.div(:class => 'GJJKPX2JFC').wait_until_present
   end
 
   def getData(id)
@@ -83,16 +62,16 @@ class FlightGoogle
       end
     rescue
       @b.quit
-    r = 0
-    d = @b.divs :class => id
-    d.each do |x|
-      r += 1
-      if r < 999 then
-      dataArr << x.text
-      else
-        break
+      r = 0
+      d = @b.divs :class => id
+      d.each do |x|
+        r += 1
+        if r < 999 then
+          dataArr << x.text
+        else
+          break
+        end
       end
-    end
     rescue
       self.closeb
       self.gotob
@@ -100,29 +79,24 @@ class FlightGoogle
     end
     return dataArr
   end
+
   def getAllData #GJJKPX2CEC
     dataArr = Hash.new
     test =[]
     dataArr['test']=[]
     dataArr['test2']=[]
-    #d = @b.divs(:class => "gwt-HTML")[12]
-    #d = @b.elements :class => /^GJJKPX2CEC/
+
     r=0
-    #d = @b.div(:text => "aller-retour", :index=>0).parent.div.text
     a = @b.div(:text => "aller-retour", :index=>0).parent
     a = a.parent until a.tag_name == 'a'
-    #puts d
-    #dataArr = a.div.text # {|x| dataArr << x.text }
     a.divs.map {|x| test << x.text }
-    #dataArr['test2']=a.div.text
     dataArr['test1'] = test
     puts "test1 ... #{dataArr['test1']}"
-    #dataArr.flatten! # you will get a one dimensional array
-    #dataArr.uniq! # removes all duplicate entries
     test.delete_if {|i| i.include? "\n"} # use double quote instead of single quote
     dataArr['test2'] = test
     puts "test2 ... #{dataArr['test2']}"
   end
+
   def getAllTable
     @alTable = @b.divs(:text => "aller-retour")
     return @alTable
@@ -131,14 +105,8 @@ class FlightGoogle
   def getAllData(row) #row should start from zero
     dataArr = Hash.new
     temp =[]
-    #dataArr['test']=[]
-    #dataArr['test2']=[]
-    #d = @b.divs(:class => "gwt-HTML")[12]
-    #d = @b.elements :class => /^GJJKPX2CEC/
     alTable = @alTable
-    #nbRow = alTable.count
     a = alTable[row].parent
-    #a = @b.div(:text => "aller-retour", :index=>r).parent
     a = a.parent until a.tag_name == 'a'
     a.divs.map {|x| temp << x.text }
     temp.delete_if {|i| i.include? "\n"}
@@ -146,20 +114,6 @@ class FlightGoogle
     dataArr[:dtComp] = temp[3]
     dataArr[:dtHours] = temp[4]
     dataArr[:dtTransit] = [temp[6]]#,temp[7]]
-    #d = @b.div(:text => "aller-retour", :index=>0).parent.div.text
-    #a = @b.div(:text => "aller-retour", :index=>r).parent
-    #a = a.parent until a.tag_name == 'a'
-    #puts d
-    #dataArr = a.div.text # {|x| dataArr << x.text }
-    #a.divs.map {|x| test << x.text }
-    #dataArr['test2']=a.div.text
-    #dataArr['test1'] = test
-    #puts "test1 ... #{dataArr['test1']}"
-    #dataArr.flatten! # you will get a one dimensional array
-    #dataArr.uniq! # removes all duplicate entries
-    #test.delete_if {|i| i.include? "\n"} # use double quote instead of single quote
-    #dataArr['test2'] = test
-    #puts "test2 ... #{dataArr['test2']}"
     return dataArr
   end
 
@@ -180,6 +134,7 @@ class FlightGoogle
     num.times {temp << arr.to_s}
     return temp
   end
+
   def closeb
     @b.quit
   end
