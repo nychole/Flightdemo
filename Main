@@ -5,7 +5,7 @@ include Mongo
 
 # initialize database
 client = MongoClient.new
-db = client.db('test')
+db = client.db('Flightdb')
 
 # para settings
 dtReserve = Date.today
@@ -14,7 +14,7 @@ obcity = 'PEK'
 
 maxObdate = 30*11
 minObdate = 7
-maxIbdate = 90
+maxIbdate = 35
 minIbdate = 14
 
 #obDate = '2014-04-01'
@@ -26,42 +26,46 @@ minIbdate = 14
 coll = db['parpek']
 
 beginning = Time.now
-
+id = 0
 # launch search engine
-for i in minObdate..minObdate do
+for i in minObdate..maxObdate do
   sub_beginning = Time.now
   obDate = (dtReserve+i)
-  ibDate = (obDate + minIbdate)
-  puts "searching starts with #{obDate}~#{ibDate}"
+  for j in minIbdate..maxIbdate do
+    id += 1
+    ibDate = (obDate + j)
+    puts "#{id}th searching starts with #{obDate}~#{ibDate}, i=#{i} & j=#{j}"
 
-  my_flight = FlightGoogle.new(ibcity,obcity,obDate,ibDate)
-  puts my_flight.getURL
+    my_flight = FlightGoogle.new(ibcity,obcity,obDate,ibDate)
+    puts my_flight.getURL
 
-  my_flight.gotob
+    my_flight.gotob
 
-  nbRow = my_flight.getnbRow
-  if nbRow>=100 then nbRow = 100 end
-  puts "getting report from #{nbRow} entries......."
-  # rewrite the matrix
-  for i in 1..nbRow do
-    my_flight_report = my_flight.getNoko(i)
-    new_flight_report = Hash.new
-    new_flight_report[:flights]=Hash.new
-    new_flight_report[:dtReserve] = dtReserve.to_s
-    new_flight_report[:obDate] = obDate.to_s
-    new_flight_report[:ibDate] = ibDate.to_s
-    new_flight_report[:flights] = {
-        :dtComp=>my_flight_report[:dtComp],
-        :dtPrice=>my_flight_report[:dtPrice],
-        :dtHours=>my_flight_report[:dtHours],
-        :dtTrans=>my_flight_report[:dtTrans],
-    }
-    coll.insert(new_flight_report)
-    puts new_flight_report.inspect
-    my_flight.closeb
+    nbRow = my_flight.getnbRow
+    if nbRow>=100 then nbRow = 100 end
+    puts "getting report from #{nbRow} entries......."
+    # rewrite the matrix
+    for row in 1..nbRow do
+      my_flight_report = my_flight.getNoko(row)
+      new_flight_report = Hash.new
+      new_flight_report[:flights]=Hash.new
+      new_flight_report[:dtReserve] = dtReserve.to_s
+      new_flight_report[:obDate] = obDate.to_s
+      new_flight_report[:ibDate] = ibDate.to_s
+      new_flight_report[:flights] = {
+          :dtComp=>my_flight_report[:dtComp],
+          :dtPrice=>my_flight_report[:dtPrice],
+          :dtHours=>my_flight_report[:dtHours],
+          :dtTrans=>my_flight_report[:dtTrans],
+      }
+      coll.insert(new_flight_report)
+      #puts new_flight_report.inspect
+      my_flight.closeb
 
+    end
+    puts "Time elapsed #{(Time.now - sub_beginning)} seconds"
   end
-  puts "Time elapsed #{(Time.now - sub_beginning)} seconds"
+
 end
 
 puts "Routine terminated and time elapsed #{(Time.now - beginning)/60} minutes"
