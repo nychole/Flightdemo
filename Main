@@ -13,10 +13,11 @@ ibcity = 'ORY,CDG'
 obcity = 'PEK'
 
 maxObdate = 30*11
-minObdate = 7
-maxIbdate = 35
-minIbdate = 14
+minObdate = 7#7
 
+maxIbdate = 35
+minIbdate = 17
+rangeIbdate = (17..30).to_a #8,15,22].to_a
 #obDate = '2014-04-01'
 #ibDate = '2014-04-08'
 #obDate = '2014-04-01'
@@ -27,18 +28,22 @@ coll = db['parpek']
 
 beginning = Time.now
 id = 0
+is_createb = 0
 # launch search engine
 for i in minObdate..maxObdate do
   sub_beginning = Time.now
   obDate = (dtReserve+i)
-  for j in minIbdate..maxIbdate do
+  for j in rangeIbdate do
     id += 1
     ibDate = (obDate + j)
     puts "#{id}th searching starts with #{obDate}~#{ibDate}, i=#{i} & j=#{j}"
 
     my_flight = FlightGoogle.new(ibcity,obcity,obDate,ibDate)
     puts my_flight.getURL
-
+    if is_createb == 0 then
+    my_flight.createb
+    is_createb = 1
+    end
     my_flight.gotob
 
     nbRow = my_flight.getnbRow
@@ -60,12 +65,14 @@ for i in minObdate..maxObdate do
       }
       coll.insert(new_flight_report)
       #puts new_flight_report.inspect
-      my_flight.closeb
+      #my_flight.closeb
 
     end
     puts "Time elapsed #{(Time.now - sub_beginning)} seconds"
   end
 
 end
+
+my_flight.closeb
 
 puts "Routine terminated and time elapsed #{(Time.now - beginning)/60} minutes"
