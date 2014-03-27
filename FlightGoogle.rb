@@ -3,7 +3,8 @@ class FlightGoogle
   require "watir-webdriver"
   require "csv"
   require "watir-nokogiri"
-  require 'timeout'
+  require "timeout"
+  require "Selenium"
 
   @@dtReserve = Date.today.to_s
   attr_accessor :obCity
@@ -18,32 +19,44 @@ class FlightGoogle
     @obDate=obDate  #yyyy-mm-dd
     @ibDate=ibDate  #yyyy-mm-dd
   end
+
   def getURL
     return "https://www.google.fr/flights/#search;f=#{@obCity};t=#{@ibCity};d=#{@obDate};r=#{@ibDate};so=p;eo=e"
   end
 
+  def createb
+    $b = Watir::Browser.new(:ie)
+  end
   def gotob
     url = self.getURL
+    idtry = 0
     puts 'gotob'
     begin
-      @b = Watir::Browser.new(:ie)
+      #@b = Watir::Browser.new(:ie) #if (defined?(@b)).nil?
       complete_results = Timeout.timeout(20) do #set longer timeout to avoid error
-        @b.goto url
+        $b.goto url
         #@b.driver.manage.timeouts.implicit_wait = 2 #3 seconds
-        @b.div(:text => "aller-retour").wait_until_present
+        $b.div(:text => "aller-retour").wait_until_present
         #until @b.div(:text => "aller-retour").exist? do
-          #nothing
-          #end
-        @doc = Nokogiri::HTML(@b.html)
+        #nothing
+        #end
+        @doc = Nokogiri::HTML($b.html)
       end
     rescue StandardError,Timeout::Error
-      if (defined?(@b)).nil? then
-        puts "No new flight object created, errors occurs, now retrying"
-        retry
-      else
-        puts "Object created, errors loading page, now retrying"
-        @b.quit
-        retry
+      #puts idtry
+      if idtry < 5 then
+        if (defined?($b)).nil? then
+          idtry += 1
+          self.createb
+          puts "No new flight object created, errors occurs, now retrying"
+          retry
+        else
+          idtry += 1
+          puts "Object created, errors loading page, now retrying"
+          $b.close
+          self.createb
+          retry
+        end
       end
     end
     #puts @b.text
@@ -193,7 +206,7 @@ class FlightGoogle
 
   def closeb
     #Watir::IE.close_all
-    @b.quit
+    $b.close
     #@b.windows.close
     #system("taskkill /im Firefox.exe /f /t >nul 2>&1")
   end
