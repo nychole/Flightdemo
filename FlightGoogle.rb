@@ -72,10 +72,12 @@ class FlightGoogle
       a = a.parent until a.tag_name == 'a'
       a.divs.map {|x| puts x.text }
 =end
-    dataArr[:dtPrice] = @doc.xpath("(//a/div[position()=1])[#{r}]").text.gsub(/[^\d]/,"").to_i
+    dataArr[:dtPrice] = @doc.xpath("(//a/div[position()=1])[#{r}]").text.gsub(/[^\d]/,'').to_i
     dataArr[:dtComp] = @doc.xpath("(//a/div[position()=2])[#{r}]").text.gsub(/[^a-zA-Z ]/,'').gsub(/ +/,' ')
-    dataArr[:dtHours] = @doc.xpath("(//a/div[position()=3])[#{r}]").text.split(/[^\d]/).delete_if(&:empty?).join('h')
-    dataArr[:dtTrans] = @doc.xpath("(//a/div[position()=4])[#{r}]").text
+    y = @doc.xpath("(//a/div[position()=3])[#{r}]").text.split(/[^\d]/).delete_if(&:empty?)
+    dataArr[:dtHours] = (y[0].to_f+y[1].to_f/60).round(2)
+    x = @doc.xpath("(//a/div[position()=4])[#{r}]").text.encode('UTF-8').split(//u, 2)[0]
+    dataArr[:dtTrans] = is_num?(x) ? x.to_i : 0
 =begin
       @doc.xpath('(//a/div[position()=4])').each do |x|
       puts "-----"
@@ -203,7 +205,13 @@ class FlightGoogle
     num.times {temp << arr.to_s}
     return temp
   end
-
+  def is_num?(str)
+    begin
+      !!Integer(str)
+    rescue ArgumentError, TypeError
+      false
+    end
+  end
   def closeb
     #Watir::IE.close_all
     $b.close
