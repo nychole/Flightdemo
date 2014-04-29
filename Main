@@ -68,9 +68,9 @@ for i in minObdate..maxObdate do
             :dtHours=>my_flight_report[:dtHours],
             :dtTrans=>my_flight_report[:dtTrans],
         }
-      end
-      #puts new_flight_report
+            #puts new_flight_report
       coll.insert(new_flight_report)
+      end
       #my_flight.closeb
     end
 
